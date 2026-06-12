@@ -35,24 +35,36 @@ def load_env():
 
 
 def get_local_ip():
-    """获取局域网 IP（跳过虚拟网卡）"""
+    """获取局域网 IP — 优先 WLAN/Wi-Fi，跳过虚拟网卡"""
     VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
-    lines = subprocess.check_output("ipconfig", shell=True, text=True).split("\n")
-    skip = False
-    candidates = []
+    output = subprocess.check_output("ipconfig", shell=True, text=True)
+    lines = output.split("\n")
+    best_ip = None
+    current_adapter = ""
+
     for line in lines:
         low = line.lower()
         if "adapter" in low:
-            skip = any(v in low for v in VIRTUAL)
-        if not skip and "IPv4" in line:
+            current_adapter = low
+        if "IPv4" in line:
             m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
             if m:
                 ip = m.group(1)
+                # 跳过虚拟网卡
+                if any(v in current_adapter for v in VIRTUAL):
+                    continue
+                # 跳过 APIPA (169.254.x.x)
+                if ip.startswith("169.254."):
+                    continue
+                # 优先局域网地址
                 if any(ip.startswith(p) for p in ("172.", "192.168.", "10.")):
-                    return ip  # 非虚拟网卡，直接返回
-                candidates.append(ip)
-    if candidates:
-        return candidates[0]
+                    # 优先 WLAN
+                    if "wlan" in current_adapter or "wi-fi" in current_adapter or "无线" in current_adapter:
+                        return ip
+                    best_ip = best_ip or ip
+
+    if best_ip:
+        return best_ip
     return socket.gethostbyname(socket.gethostname())
 
 

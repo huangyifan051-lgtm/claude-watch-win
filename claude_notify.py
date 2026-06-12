@@ -117,16 +117,23 @@ def main():
         ip = "?"
         try:
             VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
-            skip = False
+            best = None; cur = ""
             for line in _sp.check_output("ipconfig", shell=True, text=True).split("\n"):
                 low = line.lower()
                 if "adapter" in low:
-                    skip = any(v in low for v in VIRTUAL)
-                if not skip and "IPv4" in line:
+                    cur = low
+                if "IPv4" in line:
                     m = _re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-                    if m and any(m.group(1).startswith(p) for p in ("172.", "192.168.", "10.")):
-                        ip = m.group(1)
-                        break
+                    if m:
+                        a = m.group(1)
+                        if any(v in cur for v in VIRTUAL) or a.startswith("169.254."):
+                            continue
+                        if any(a.startswith(p) for p in ("172.", "192.168.", "10.")):
+                            if "wlan" in cur or "wi-fi" in cur or "无线" in cur:
+                                ip = a; break
+                            best = best or a
+            if ip == "?":
+                ip = best or "?"
         except:
             pass
         title = "审批地址"
