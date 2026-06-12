@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 enabled
 approvals/
+auto_approve.json
+mailbox/
+status.json

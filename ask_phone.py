@@ -103,6 +103,32 @@ def main():
     with open(os.path.join(QUEUE_DIR, pid), "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False)
 
+    # 检查自动批准模式
+    auto_file = os.path.join(HERE, "auto_approve.json")
+    auto_approved = False
+    if os.path.exists(auto_file):
+        try:
+            with open(auto_file, encoding="utf-8") as f:
+                aa = json.load(f)
+            if aa.get("enabled") and time.time() < aa.get("until", 0):
+                auto_approved = True
+        except:
+            pass
+
+    fpath = os.path.join(QUEUE_DIR, pid)
+
+    if auto_approved:
+        # 自动批准：直接写结果，不等待手机
+        with open(fpath, encoding="utf-8") as f:
+            dd = json.load(f)
+        dd["result"] = "approve"
+        dd["auto"] = True
+        with open(fpath + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(dd, f)
+        os.replace(fpath + ".tmp", fpath)
+        print(json.dumps({"decision": "approve"}))
+        return
+
     # 发 Bark 通知
     env = load_env()
     bark = os.environ.get("BARK_URL") or env.get("BARK_URL", "")
@@ -114,7 +140,6 @@ def main():
         send_bark(bark, f"🔐 {tool}", body)
 
     # 等待审批结果
-    fpath = os.path.join(QUEUE_DIR, pid)
     deadline = time.time() + 180  # 3 分钟超时
 
     while time.time() < deadline:

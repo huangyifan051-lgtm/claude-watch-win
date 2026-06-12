@@ -13,7 +13,7 @@ Claude Code → Windows → iPhone/Apple Watch 通知
     A) Bark - 安装免费 iOS App, 拿到 URL 即用, 零配置
     B) ntfy.sh - 开源推送服务, Android/iOS 都支持
 """
-import sys, os, json, subprocess
+import sys, os, json, subprocess, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENABLED_FILE = os.path.join(HERE, "enabled")
@@ -173,6 +173,18 @@ def main():
         body = event
 
     send_notification(env, title, body)
+
+    # 写入状态文件（手机仪表盘可见）
+    try:
+        status = {
+            "last_event": title,
+            "last_time": time.strftime("%H:%M:%S"),
+            "last_project": proj,
+        }
+        with open(os.path.join(HERE, "status.json"), "w", encoding="utf-8") as f:
+            json.dump(status, f)
+    except:
+        pass
 
 
 if __name__ == "__main__":
