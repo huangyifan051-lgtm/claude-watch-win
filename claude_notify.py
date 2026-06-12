@@ -115,6 +115,25 @@ def main():
 
     env = load_env()
     event = get_arg("--event", "notify")
+
+    # server event 不走 stdin
+    if event == "server":
+        import re as _re, subprocess as _sp
+        ip = "?"
+        try:
+            for line in _sp.check_output("ipconfig", shell=True, text=True).split("\n"):
+                if "IPv4" in line:
+                    m = _re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
+                    if m and (m.group(1).startswith("172.") or m.group(1).startswith("192.168.") or m.group(1).startswith("10.")):
+                        ip = m.group(1)
+                        break
+        except:
+            pass
+        title = "审批地址"
+        body = f"http://{ip}:9876  (收藏备用)"
+        send_notification(env, title, body)
+        return
+
     data = read_hook_json()
     cwd = data.get("cwd", "") or ""
     proj = os.path.basename(cwd.rstrip("/")) if cwd else ""

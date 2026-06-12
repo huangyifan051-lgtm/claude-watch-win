@@ -105,7 +105,7 @@ def main():
     approve_url = f"http://{ip}:{PORT}"
 
     if bark:
-        body = f"{detail}\n\n👉 {approve_url}\n点击链接 → 点批准/拒绝"
+        body = f"{detail}\n\n🌐 审批: {approve_url}"
         send_bark(bark, f"🔐 {tool}", body)
 
     # 等待审批结果
