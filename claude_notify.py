@@ -24,7 +24,7 @@ def load_env():
     """读取 .env 配置"""
     env = {}
     if os.path.exists(ENV_FILE):
-        with open(ENV_FILE, encoding="utf-8") as f:
+        with open(ENV_FILE, encoding="utf-8-sig") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
@@ -40,20 +40,15 @@ def enabled():
 
 
 def send_bark(bark_url, title, body, group="Claude Code"):
-    """通过 Bark 发送通知 (免费 iOS App)"""
-    import urllib.request
-    import urllib.parse
+    """通过 Bark 发送通知 (免费 iOS App) — 使用系统 curl 避免 Python SSL 兼容问题"""
+    import subprocess as _sp
     full_url = bark_url.rstrip("/")
-    params = urllib.parse.urlencode({
-        "title": title,
-        "body": body,
-        "group": group,
-        "sound": "telegraph",
-        "isArchive": "1",
-    })
-    url = f"{full_url}/{urllib.parse.quote(title)}/{urllib.parse.quote(body)}?{params}"
     try:
-        urllib.request.urlopen(url, timeout=10)
+        _sp.run([
+            "curl", "-s", "-X", "POST",
+            f"{full_url}/{title}/{body}?title={title}&body={body}&group={group}&sound=telegraph&isArchive=1",
+            "--max-time", "10"
+        ], timeout=12, capture_output=True, creationflags=0x08000000)
         return True
     except Exception:
         return False

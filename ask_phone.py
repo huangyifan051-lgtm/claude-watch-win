@@ -24,7 +24,7 @@ def load_env():
     env = {}
     env_path = os.path.join(HERE, ".env")
     if os.path.exists(env_path):
-        with open(env_path, encoding="utf-8") as f:
+        with open(env_path, encoding="utf-8-sig") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
@@ -47,10 +47,15 @@ def get_local_ip():
 
 
 def send_bark(url, title, body):
+    """通过 Bark 发送通知 — 使用系统 curl 避免 Python SSL 兼容问题"""
+    import subprocess as _sp
+    full = url.rstrip("/")
     try:
-        full = url.rstrip("/")
-        p = urllib.parse.urlencode({"title": title, "body": body, "group": "Claude Code", "isArchive": "1"})
-        urllib.request.urlopen(f"{full}/{urllib.parse.quote(title)}/{urllib.parse.quote(body)}?{p}", timeout=8)
+        _sp.run([
+            "curl", "-s", "-X", "POST",
+            f"{full}/{title}/{body}?title={title}&body={body}&group=Claude+Code&isArchive=1",
+            "--max-time", "8"
+        ], timeout=10, capture_output=True, creationflags=0x08000000)
     except:
         pass
 

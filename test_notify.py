@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 测试通知是否正常 — 跑一下看看手机收不收得到
 用法: python test_notify.py
 """
-import os, sys
+import os, sys, io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from claude_notify import load_env, send_notification, enabled
 
@@ -13,7 +15,7 @@ env_path = os.path.join(HOME, ".env")
 # 1. 检查配置
 if not os.path.exists(env_path):
     print("❌ 请先配置 .env 文件:")
-    print("   cp E:\\potato_prceed\\claude-watch-win\\.env.example .env")
+    print("   cp D:\\claude-watch-win\\.env.example .env")
     print("   编辑 .env, 填入你的 BARK_URL 或 NTFY_TOPIC")
     sys.exit(1)
 
