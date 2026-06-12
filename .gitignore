@@ -6,3 +6,5 @@ approvals/
 auto_approve.json
 mailbox/
 status.json
+.last_mailbox_check
+ask_phone_debug.log
