@@ -1,7 +1,12 @@
-[23:10:59] ask_phone.py 被调用
-[23:10:59] stdin 长度: 634, 内容: {"session_id":"a045a68b-0540-4054-9eb7-b79df8644972","transcript_path":"C:\\Users\\Administrator\\.claude\\projects\\C--Users-Administrator\\a045a68b-0540-4054-9eb7-b79df8644972.jsonl","cwd":"C:\\Users\\Administrator","permission_mode":"default","effort":{"level":"high"},"hook_event_name":"Permissio
-[23:10:59] Bark已发, IP=172.31.112.1, 开始轮询 D:\claude-watch-win\approvals\1781277059_39d167.json
-[23:11:18] ask_phone.py 被调用
-[23:11:18] stdin 长度: 1069, 内容: {"session_id":"a045a68b-0540-4054-9eb7-b79df8644972","transcript_path":"C:\\Users\\Administrator\\.claude\\projects\\C--Users-Administrator\\a045a68b-0540-4054-9eb7-b79df8644972.jsonl","cwd":"C:\\Users\\Administrator","permission_mode":"default","effort":{"level":"high"},"hook_event_name":"Permissio
-[23:11:18] Bark已发, IP=172.31.112.1, 开始轮询 D:\claude-watch-win\approvals\1781277078_cc6504.json
-[23:11:19] 超时！轮询120次未检测到结果
+[23:16:54] ask_phone.py 被调用
+[23:16:54] stdin 长度: 942
+[23:16:54] JSON OK, tool_name=PowerShell
+[23:16:54] Bark已发, IP=172.20.10.2, 开始轮询 D:\claude-watch-win\approvals\1781277414_d05272.json
+[23:17:03] ask_phone.py 被调用
+[23:17:03] stdin 长度: 1028
+[23:17:03] JSON OK, tool_name=PowerShell
+[23:17:03] Bark已发, IP=172.20.10.2, 开始轮询 D:\claude-watch-win\approvals\1781277423_725a8e.json
+[23:17:16] ask_phone.py 被调用
+[23:17:16] stdin 长度: 1047
+[23:17:16] JSON OK, tool_name=PowerShell
+[23:17:16] Bark已发, IP=172.20.10.2, 开始轮询 D:\claude-watch-win\approvals\1781277436_77a092.json

@@ -35,37 +35,15 @@ def load_env():
 
 
 def get_local_ip():
-    """获取局域网 IP — 优先 WLAN/Wi-Fi，跳过虚拟网卡"""
-    VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
-    output = subprocess.check_output("ipconfig", shell=True, text=True)
-    lines = output.split("\n")
-    best_ip = None
-    current_adapter = ""
-
-    for line in lines:
-        low = line.lower()
-        if "adapter" in low:
-            current_adapter = low
-        if "IPv4" in line:
-            m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-            if m:
-                ip = m.group(1)
-                # 跳过虚拟网卡
-                if any(v in current_adapter for v in VIRTUAL):
-                    continue
-                # 跳过 APIPA (169.254.x.x)
-                if ip.startswith("169.254."):
-                    continue
-                # 优先局域网地址
-                if any(ip.startswith(p) for p in ("172.", "192.168.", "10.")):
-                    # 优先 WLAN
-                    if "wlan" in current_adapter or "wi-fi" in current_adapter or "无线" in current_adapter:
-                        return ip
-                    best_ip = best_ip or ip
-
-    if best_ip:
-        return best_ip
-    return socket.gethostbyname(socket.gethostname())
+    """获取局域网 IP — 最可靠方法：创建 UDP socket 看系统走哪个网卡"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return socket.gethostbyname(socket.gethostname())
 
 
 def send_bark(url, title, body):
@@ -99,14 +77,15 @@ def main():
         dlog("enabled=false, 退出")
         return
 
-    # 读取 Claude Code 传入的 JSON
-    raw = sys.stdin.read()
-    dlog(f"stdin 长度: {len(raw)}, 内容: {raw[:300]}")
+    # 读取 Claude Code 传入的 JSON（去除 BOM）
+    raw = sys.stdin.buffer.read().decode("utf-8-sig")
+    dlog(f"stdin 长度: {len(raw)}")
     try:
         data = json.loads(raw) if raw.strip() else {}
-    except:
+        dlog(f"JSON OK, tool_name={data.get('tool_name','?')}")
+    except Exception as e:
         data = {}
-        dlog(f"JSON 解析失败, raw={raw[:200]}")
+        dlog(f"JSON 解析失败: {e}, raw[:200]={raw[:200]}")
 
     tool = data.get("tool_name", "unknown")
     ti = data.get("tool_input", {})

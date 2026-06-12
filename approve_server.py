@@ -433,29 +433,13 @@ def cleanup_old():
 def run_server():
     server = HTTPServer(("0.0.0.0", PORT), Handler)
     hostname = socket.gethostname()
-    # 获取局域网 IP（优先 WLAN，跳过虚拟网卡）
-    import subprocess
-    VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
+    # 获取局域网 IP（UDP socket 法，最可靠）
     ip = "localhost"
     try:
-        best = None
-        cur = ""
-        for line in subprocess.check_output("ipconfig", shell=True, text=True).split("\n"):
-            low = line.lower()
-            if "adapter" in low:
-                cur = low
-            if "IPv4" in line:
-                m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-                if m:
-                    a = m.group(1)
-                    if any(v in cur for v in VIRTUAL) or a.startswith("169.254."):
-                        continue
-                    if any(a.startswith(p) for p in ("172.", "192.168.", "10.")):
-                        if "wlan" in cur or "wi-fi" in cur or "无线" in cur:
-                            ip = a; break
-                        best = best or a
-        if not ip or ip == "localhost":
-            ip = best or "localhost"
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
     except:
         pass
     print(f"✅ 审批服务器已启动!")

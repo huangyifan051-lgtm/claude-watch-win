@@ -88,7 +88,7 @@ def send_notification(env, title, body):
 
 def read_hook_json():
     try:
-        raw = sys.stdin.read()
+        raw = sys.stdin.buffer.read().decode("utf-8-sig")
         if raw.strip():
             return json.loads(raw)
     except Exception:
@@ -113,27 +113,13 @@ def main():
 
     # server event 不走 stdin
     if event == "server":
-        import re as _re, subprocess as _sp
+        import socket as _sock
         ip = "?"
         try:
-            VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
-            best = None; cur = ""
-            for line in _sp.check_output("ipconfig", shell=True, text=True).split("\n"):
-                low = line.lower()
-                if "adapter" in low:
-                    cur = low
-                if "IPv4" in line:
-                    m = _re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-                    if m:
-                        a = m.group(1)
-                        if any(v in cur for v in VIRTUAL) or a.startswith("169.254."):
-                            continue
-                        if any(a.startswith(p) for p in ("172.", "192.168.", "10.")):
-                            if "wlan" in cur or "wi-fi" in cur or "无线" in cur:
-                                ip = a; break
-                            best = best or a
-            if ip == "?":
-                ip = best or "?"
+            s = _sock.socket(_sock.AF_INET, _sock.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
         except:
             pass
         title = "审批地址"
