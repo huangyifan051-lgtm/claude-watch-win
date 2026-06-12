@@ -428,14 +428,19 @@ def cleanup_old():
 def run_server():
     server = HTTPServer(("0.0.0.0", PORT), Handler)
     hostname = socket.gethostname()
-    # 获取局域网 IP
+    # 获取局域网 IP（跳过虚拟网卡）
     import subprocess
+    VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
     ip = "localhost"
     try:
+        skip = False
         for line in subprocess.check_output("ipconfig", shell=True, text=True).split("\n"):
-            if "IPv4" in line and "172" in line:
+            low = line.lower()
+            if "adapter" in low:
+                skip = any(v in low for v in VIRTUAL)
+            if not skip and "IPv4" in line:
                 m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-                if m:
+                if m and any(m.group(1).startswith(p) for p in ("172.", "192.168.", "10.")):
                     ip = m.group(1)
                     break
     except:

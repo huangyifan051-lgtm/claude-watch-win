@@ -116,10 +116,15 @@ def main():
         import re as _re, subprocess as _sp
         ip = "?"
         try:
+            VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
+            skip = False
             for line in _sp.check_output("ipconfig", shell=True, text=True).split("\n"):
-                if "IPv4" in line:
+                low = line.lower()
+                if "adapter" in low:
+                    skip = any(v in low for v in VIRTUAL)
+                if not skip and "IPv4" in line:
                     m = _re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
-                    if m and (m.group(1).startswith("172.") or m.group(1).startswith("192.168.") or m.group(1).startswith("10.")):
+                    if m and any(m.group(1).startswith(p) for p in ("172.", "192.168.", "10.")):
                         ip = m.group(1)
                         break
         except:

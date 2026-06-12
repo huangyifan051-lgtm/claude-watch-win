@@ -35,14 +35,24 @@ def load_env():
 
 
 def get_local_ip():
-    """获取局域网 IP"""
-    for line in subprocess.check_output("ipconfig", shell=True, text=True).split("\n"):
-        if "IPv4" in line:
+    """获取局域网 IP（跳过虚拟网卡）"""
+    VIRTUAL = ("hyper-v", "wsl", "vethernet", "virtual", "loopback", "bluetooth")
+    lines = subprocess.check_output("ipconfig", shell=True, text=True).split("\n")
+    skip = False
+    candidates = []
+    for line in lines:
+        low = line.lower()
+        if "adapter" in low:
+            skip = any(v in low for v in VIRTUAL)
+        if not skip and "IPv4" in line:
             m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
             if m:
                 ip = m.group(1)
-                if ip.startswith("172.") or ip.startswith("192.168.") or ip.startswith("10."):
-                    return ip
+                if any(ip.startswith(p) for p in ("172.", "192.168.", "10.")):
+                    return ip  # 非虚拟网卡，直接返回
+                candidates.append(ip)
+    if candidates:
+        return candidates[0]
     return socket.gethostbyname(socket.gethostname())
 
 
