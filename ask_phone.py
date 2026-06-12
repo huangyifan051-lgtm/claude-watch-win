@@ -71,16 +71,30 @@ def send_bark(url, title, body):
 
 
 def main():
+    # 调试日志
+    import datetime
+    log_path = os.path.join(HERE, "ask_phone_debug.log")
+    def dlog(msg):
+        try:
+            with open(log_path, "a", encoding="utf-8") as lf:
+                lf.write(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {msg}\n")
+        except:
+            pass
+    dlog("ask_phone.py 被调用")
+
     # 未启用 → 不输出任何内容, Claude Code 退回到键盘确认
     if not enabled():
+        dlog("enabled=false, 退出")
         return
 
     # 读取 Claude Code 传入的 JSON
     raw = sys.stdin.read()
+    dlog(f"stdin 长度: {len(raw)}, 内容: {raw[:300]}")
     try:
         data = json.loads(raw) if raw.strip() else {}
     except:
         data = {}
+        dlog(f"JSON 解析失败, raw={raw[:200]}")
 
     tool = data.get("tool_name", "unknown")
     ti = data.get("tool_input", {})
@@ -129,6 +143,7 @@ def main():
 
     if auto_approved:
         # 自动批准：直接写结果，不等待手机
+        dlog("自动批准模式，跳过手机确认")
         with open(fpath, encoding="utf-8") as f:
             dd = json.load(f)
         dd["result"] = "approve"
@@ -137,6 +152,7 @@ def main():
             json.dump(dd, f)
         os.replace(fpath + ".tmp", fpath)
         print(json.dumps({"decision": "approve"}))
+        dlog("输出 decision=approve (自动)")
         return
 
     # 发 Bark 通知
@@ -148,18 +164,23 @@ def main():
     if bark:
         body = f"{detail}\n\n🌐 审批: {approve_url}"
         send_bark(bark, f"🔐 {tool}", body)
+    dlog(f"Bark已发, IP={ip}, 开始轮询 {fpath}")
 
     # 等待审批结果
     deadline = time.time() + 180  # 3 分钟超时
+    poll_count = 0
 
     while time.time() < deadline:
+        poll_count += 1
         try:
             with open(fpath, encoding="utf-8") as f:
                 dd = json.load(f)
             if dd.get("result") == "approve":
+                dlog(f"轮询{poll_count}次检测到 approve")
                 print(json.dumps({"decision": "approve"}))
                 return
             elif dd.get("result") == "deny":
+                dlog(f"轮询{poll_count}次检测到 deny")
                 print(json.dumps({"decision": "block"}))
                 return
         except:
@@ -167,6 +188,7 @@ def main():
         time.sleep(1.5)
 
     # 超时 = 拒绝，并标记文件避免僵尸卡
+    dlog(f"超时！轮询{poll_count}次未检测到结果")
     try:
         with open(fpath, encoding="utf-8") as f:
             dd = json.load(f)
