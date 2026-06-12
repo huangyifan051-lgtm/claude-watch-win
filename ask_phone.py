@@ -166,7 +166,17 @@ def main():
             pass
         time.sleep(1.5)
 
-    # 超时 = 拒绝
+    # 超时 = 拒绝，并标记文件避免僵尸卡
+    try:
+        with open(fpath, encoding="utf-8") as f:
+            dd = json.load(f)
+        dd["result"] = "deny"
+        dd["auto"] = True
+        with open(fpath + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(dd, f)
+        os.replace(fpath + ".tmp", fpath)
+    except:
+        pass
     print(json.dumps({"decision": "block"}))
 
 

@@ -257,12 +257,17 @@ class Handler(BaseHTTPRequestHandler):
         elif p.path == "/api/list":
             items = []
             history = []
+            now = time.time()
             for fname in sorted(os.listdir(QUEUE_DIR)):
                 fpath = os.path.join(QUEUE_DIR, fname)
                 try:
                     with open(fpath, encoding="utf-8") as f:
                         d = json.load(f)
                     d["id"] = fname
+                    # 超过5分钟未审批的视为过期，自动拒绝
+                    if not d.get("result") and (now - d.get("created_at", 0) > 300):
+                        d["result"] = "deny"
+                        d["auto"] = True
                     if d.get("result"):
                         history.append(d)
                     else:
